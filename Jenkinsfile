@@ -1,15 +1,23 @@
+
 pipeline {
     agent any
 
     environment {
-        IMAGE = 'jeeva1304/employee-app'
+        IMAGE = 'jeeva1304/employee-app:latest'
+        CONTAINER = 'employee-web-app'
     }
 
     stages {
 
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Build') {
             steps {
-                sh 'docker build -t $IMAGE .'
+                sh 'docker build -t "$IMAGE" .'
             }
         }
 
@@ -19,7 +27,7 @@ pipeline {
             }
         }
 
-        stage('Docker Push') {
+        stage('Docker Login and Push') {
             steps {
                 withCredentials([
                     usernamePassword(
@@ -29,10 +37,12 @@ pipeline {
                     )
                 ]) {
                     sh '''
-                        echo "$DOCKER_PASS" |
-                        docker login -u "$DOCKER_USER" --password-stdin
+                        set +x
+                        echo "$DOCKER_PASS" | docker login \
+                            -u "$DOCKER_USER" --password-stdin
 
-                        docker push $IMAGE
+                        docker push "$IMAGE"
+
                         docker logout
                     '''
                 }
@@ -41,11 +51,28 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                 sh '''
-                 docker rm -f employee-web-app || true
-                 docker run -d --name employee-web-app -p 8000:5000 $IMAGE
-                 '''
+                sh '''
+                    docker pull "$IMAGE"
+
+                    docker rm -f "$CONTAINER" || true
+
+                    docker run -d \
+                        --name "$CONTAINER" \
+                        --restart unless-stopped \
+                        -p 8000:5000 \
+                        "$IMAGE"
+                '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Employee Attendance Application Deployed!'
+        }
+
+        failure {
+            echo 'Pipeline Failed!'
         }
     }
 }
