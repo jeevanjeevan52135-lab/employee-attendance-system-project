@@ -59,7 +59,7 @@ pipeline {
                     docker run -d \
                         --name "$CONTAINER" \
                         --restart unless-stopped \
-                        -p 8000:5000 \
+                        -p 5000:5000 \
                         "$IMAGE"
                 '''
             }
