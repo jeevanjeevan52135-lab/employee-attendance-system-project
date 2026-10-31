@@ -44,6 +44,7 @@ pipeline {
                  sh '''
                  docker rm -f employee-web-app || true
                  docker run -d --name employee-web-app -p 8000:5000 $IMAGE
+                 '''
             }
         }
     }
