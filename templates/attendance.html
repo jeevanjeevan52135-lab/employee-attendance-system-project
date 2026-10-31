@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% from "_ui.html" import icon, avatar %}
+{% block title %}Attendance{% endblock %}
+{% block content %}
+<div class="page-heading"><div><h1>Attendance history</h1><p class="muted">{% if session.get('role') == 'admin' %}All employee attendance records.{% else %}Your latest attendance records.{% endif %}</p></div>{% if session.get('role') == 'admin' %}<a class="btn btn-primary" href="{{ url_for('attendance_csv') }}">{{ icon('download', 18) }}Export CSV</a>{% endif %}</div>
+<section class="panel"><div class="table-wrap"><table><thead><tr>{% if session.get('role') == 'admin' %}<th>Employee</th>{% endif %}<th>Date</th><th>Check in</th><th>Check out</th><th>Status</th></tr></thead><tbody>
+{% for row in records %}<tr>{% if session.get('role') == 'admin' %}<td><div class="person">{{ avatar(row.name) }}<div><span>{{ row.name }}</span><small>{{ row.email }}</small></div></div></td>{% endif %}<td class="num">{{ row.work_date }}</td><td class="num">{{ row.check_in[11:16] if row.check_in else '—' }}</td><td class="num">{{ row.check_out[11:16] if row.check_out else '—' }}</td><td><span class="pill {{ row.status }}">{{ row.status|replace('_',' ') }}</span></td></tr>{% else %}<tr><td colspan="5" class="empty">No attendance records found.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

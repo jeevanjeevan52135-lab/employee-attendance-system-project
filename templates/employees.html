@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_ui.html" import icon, avatar %}
+{% block title %}Employees{% endblock %}
+{% block content %}
+<div class="page-heading"><div><h1>Employee accounts</h1><p class="muted">Create staff accounts and manage who can sign in.</p></div></div>
+<section class="panel"><h2>Create account</h2><form method="post" class="form-grid">
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+<label>Full name<input name="name" required maxlength="120"></label>
+<label>Email<input type="email" name="email" required maxlength="254"></label>
+<label>Temporary password<input type="password" name="password" required minlength="10" autocomplete="new-password"><small>At least 10 characters</small></label>
+<label>Role<select name="role"><option value="employee">Employee</option><option value="admin">Admin</option></select></label>
+<div><button class="btn btn-primary" type="submit">{{ icon('plus', 18) }}Create account</button></div>
+</form></section>
+<section class="panel"><h2>All users</h2><div class="table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Action</th></tr></thead><tbody>
+{% for user in employees %}<tr><td><div class="person">{{ avatar(user.name) }}<div><span>{{ user.name }}</span><small>{{ user.email }}</small></div></div></td><td>{{ user.role|capitalize }}</td><td><span class="pill {{ 'present' if user.is_active else 'absent' }}">{{ 'Active' if user.is_active else 'Inactive' }}</span></td><td>
+{% if user.id != session.get('user_id') %}<form method="post" action="{{ url_for('toggle_employee',user_id=user.id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button class="btn btn-small btn-outline" type="submit">{{ 'Deactivate' if user.is_active else 'Activate' }}</button></form>{% else %}<span class="muted">Your account</span>{% endif %}
+</td></tr>{% else %}<tr><td colspan="4" class="empty">No users found.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

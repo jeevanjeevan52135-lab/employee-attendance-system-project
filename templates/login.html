@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_ui.html" import icon %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+<section class="entry">
+  <div class="entry-art">
+    <a class="brand" href="{{ url_for('login') }}"><span class="brand-mark">{{ icon('clock', 18) }}</span><span>StaffTrack</span></a>
+    <div class="entry-copy">
+      <h2>Attendance and leave, all in one place.</h2>
+      <p>Check in, check out and request time off in a few taps.</p>
+      <div class="glass-clock">
+        <span class="big-time" data-live-clock>--:--</span>
+        <span class="big-date" data-live-date></span>
+      </div>
+    </div>
+  </div>
+  <div class="entry-form">
+    <div class="entry-card">
+      <button class="icon-btn entry-theme" type="button" data-theme-toggle aria-label="Switch light or dark theme"><span class="t-sun">{{ icon('sun', 18) }}</span><span class="t-moon">{{ icon('moon', 18) }}</span></button>
+      <h1>Welcome back</h1>
+      <p class="muted">Sign in with the email and password your administrator gave you.</p>
+      <form method="post" class="form-stack">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <label>Email address<input type="email" name="email" placeholder="you@company.com" required autocomplete="username"></label>
+        <label>Password<input type="password" name="password" placeholder="Enter your password" required autocomplete="current-password"></label>
+        <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+      </form>
+      <p class="hint">No account yet? Ask your administrator to create one.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

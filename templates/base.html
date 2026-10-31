@@ -1,0 +1,41 @@
+{% from "_ui.html" import icon, avatar %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}StaffTrack{% endblock %} | StaffTrack</title>
+  <script>try{var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="{{ 'app' if session.get('user_id') else 'guest' }}">
+{% if session.get('user_id') %}
+<aside class="rail">
+  <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark">{{ icon('clock', 18) }}</span><span>StaffTrack</span></a>
+  <nav aria-label="Main">
+    <a href="{{ url_for('dashboard') }}" {% if request.endpoint == 'dashboard' %}class="is-active" aria-current="page"{% endif %}>{{ icon('home') }}<span>Dashboard</span></a>
+    <a href="{{ url_for('attendance_history') }}" {% if request.endpoint == 'attendance_history' %}class="is-active" aria-current="page"{% endif %}>{{ icon('clock') }}<span>Attendance</span></a>
+    <a href="{{ url_for('leave') }}" {% if request.endpoint == 'leave' %}class="is-active" aria-current="page"{% endif %}>{{ icon('calendar') }}<span>Leave</span></a>
+    {% if session.get('role') == 'admin' %}
+    <a href="{{ url_for('employees') }}" {% if request.endpoint == 'employees' %}class="is-active" aria-current="page"{% endif %}>{{ icon('users') }}<span>Employees</span></a>
+    <a href="{{ url_for('attendance_csv') }}">{{ icon('download') }}<span>CSV report</span></a>
+    {% endif %}
+  </nav>
+  <div class="account">
+    {{ avatar(session.get('name')) }}
+    <div class="who"><strong>{{ session.get('name') }}</strong><span>{{ session.get('role')|capitalize }}</span></div>
+    <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch light or dark theme"><span class="t-sun">{{ icon('sun', 18) }}</span><span class="t-moon">{{ icon('moon', 18) }}</span></button>
+    <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button class="icon-btn" type="submit" aria-label="Log out">{{ icon('logout', 18) }}</button></form>
+  </div>
+</aside>
+{% endif %}
+<main class="stage">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}<div class="flash-dock">{% for category,message in messages %}<div class="flash {{ category }}" role="status">{{ message }}</div>{% endfor %}</div>{% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+</body></html>

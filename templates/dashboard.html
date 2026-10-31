@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "_ui.html" import icon, avatar %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% if session.get('role') == 'admin' %}
+{% set pct = ((stats.present / stats.employees * 100)|round|int if stats.employees else 0) %}
+<section class="hero hero-admin">
+  <div>
+    <p class="hero-hello"><span data-greeting>Hello</span>, {{ session.get('name') }}</p>
+    <h1 class="hero-title">Here's your team today</h1>
+    <p class="hero-date"><time datetime="{{ today }}" data-format="long">{{ today }}</time></p>
+  </div>
+  <div class="hero-actions">
+    <a class="btn btn-white" href="{{ url_for('employees') }}">{{ icon('plus', 18) }}New employee</a>
+    <a class="btn btn-glass" href="{{ url_for('attendance_csv') }}">{{ icon('download', 18) }}Export CSV</a>
+  </div>
+</section>
+<div class="stats">
+  <div class="stat"><span class="stat-ic">{{ icon('users', 22) }}</span><div><span class="stat-label">Active employees</span><strong>{{ stats.employees }}</strong></div></div>
+  <div class="stat"><span class="stat-ic ok">{{ icon('check', 22) }}</span><div><span class="stat-label">Checked in today</span><strong>{{ stats.present }}</strong><div class="bar" role="img" aria-label="{{ pct }} percent of employees checked in"><i style="width:{{ [pct,100]|min }}%"></i></div></div></div>
+  <a class="stat stat-link {{ 'is-warn' if stats.pending else '' }}" href="{{ url_for('leave') }}"><span class="stat-ic warn">{{ icon('inbox', 22) }}</span><div><span class="stat-label">Pending leave requests</span><strong>{{ stats.pending }}</strong></div></a>
+</div>
+<section class="panel"><div class="panel-heading"><h2>Recent attendance</h2><a href="{{ url_for('attendance_history') }}">View all</a></div>
+<div class="table-wrap"><table><thead><tr><th>Employee</th><th>Date</th><th>Check in</th><th>Check out</th><th>Status</th></tr></thead><tbody>
+{% for row in recent %}<tr><td><div class="person">{{ avatar(row.name) }}<span>{{ row.name }}</span></div></td><td class="num">{{ row.work_date }}</td><td class="num">{{ row.check_in[11:16] if row.check_in else '—' }}</td><td class="num">{{ row.check_out[11:16] if row.check_out else '—' }}</td><td><span class="pill {{ row.status }}">{{ row.status|replace('_',' ') }}</span></td></tr>{% else %}<tr><td colspan="5" class="empty">No attendance yet. Records appear after the first check-in.</td></tr>{% endfor %}
+</tbody></table></div></section>
+
+{% else %}
+{% set ci = attendance.check_in if attendance and attendance.check_in else '' %}
+{% set co = attendance.check_out if attendance and attendance.check_out else '' %}
+{% set pending = leaves|selectattr('status','equalto','pending')|list|length %}
+<section class="hero" data-hero data-in="{{ ci }}" data-out="{{ co }}">
+  <div class="hero-main">
+    <p class="hero-hello"><span data-greeting>Hello</span>, {{ session.get('name') }}</p>
+    <p class="hero-date"><time datetime="{{ today }}" data-format="long">{{ today }}</time></p>
+    <div class="hero-time" data-live-clock data-seconds>--:--:--</div>
+    <span class="chip" data-chip><i></i><b data-chip-text>{% if co %}Day complete{% elif ci %}On the clock{% else %}Not checked in{% endif %}</b></span>
+    <div class="actions">
+      <form method="post" action="{{ url_for('check_in') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button class="btn btn-white" type="submit" {% if attendance and attendance.check_in %}disabled{% endif %}>{{ icon('login', 18) }}Check in</button></form>
+      <form method="post" action="{{ url_for('check_out') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button class="btn btn-glass" type="submit" {% if not attendance or not attendance.check_in or attendance.check_out %}disabled{% endif %}>{{ icon('logout', 18) }}Check out</button></form>
+    </div>
+  </div>
+  <div class="ring" aria-label="Progress toward an 8 hour day">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="ring-track" cx="60" cy="60" r="50" pathLength="100"/><circle class="ring-arc" cx="60" cy="60" r="50" pathLength="100" transform="rotate(-90 60 60)" data-arc/></svg>
+    <div class="ring-text"><strong data-worked>0h 00m</strong><span>of 8h goal</span></div>
+  </div>
+</section>
+<div class="stats">
+  <div class="stat"><span class="stat-ic ok">{{ icon('login', 22) }}</span><div><span class="stat-label">Checked in</span><strong class="num">{{ ci[11:16] if ci else 'Not yet' }}</strong></div></div>
+  <div class="stat"><span class="stat-ic">{{ icon('logout', 22) }}</span><div><span class="stat-label">Checked out</span><strong class="num">{{ co[11:16] if co else 'Not yet' }}</strong></div></div>
+  <a class="stat stat-link {{ 'is-warn' if pending else '' }}" href="{{ url_for('leave') }}"><span class="stat-ic warn">{{ icon('calendar', 22) }}</span><div><span class="stat-label">Pending leave</span><strong>{{ pending }}</strong></div></a>
+</div>
+<div class="cols">
+  <section class="panel"><div class="panel-heading"><h2>Recent attendance</h2><a href="{{ url_for('attendance_history') }}">Full history</a></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Check in</th><th>Check out</th><th>Status</th></tr></thead><tbody>
+  {% for row in history %}<tr><td class="num">{{ row.work_date }}</td><td class="num">{{ row.check_in[11:16] if row.check_in else '—' }}</td><td class="num">{{ row.check_out[11:16] if row.check_out else '—' }}</td><td><span class="pill {{ row.status }}">{{ row.status|replace('_',' ') }}</span></td></tr>{% else %}<tr><td colspan="4" class="empty">No records yet. Check in to log your first day.</td></tr>{% endfor %}
+  </tbody></table></div></section>
+  <section class="panel"><div class="panel-heading"><h2>Leave requests</h2><a href="{{ url_for('leave') }}">Manage</a></div>
+    <ul class="plain">
+    {% for row in leaves %}<li><div><span class="num">{{ row.start_date }} – {{ row.end_date }}</span><small>{{ row.reason }}</small></div><span class="pill {{ row.status }}">{{ row.status }}</span></li>{% else %}<li class="empty">No leave requests yet.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+{% endif %}
+{% endblock %}

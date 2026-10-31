@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_ui.html" import avatar %}
+{% block title %}Leave approvals{% endblock %}
+{% block content %}
+<div class="page-heading"><div><h1>Leave approvals</h1><p class="muted">Review employee leave requests. Pending ones are listed first.</p></div></div>
+<section class="panel"><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Dates</th><th>Reason</th><th>Status</th><th>Decision</th></tr></thead><tbody>
+{% for row in requests %}<tr><td><div class="person">{{ avatar(row.name) }}<div><span>{{ row.name }}</span><small>{{ row.email }}</small></div></div></td><td class="num">{{ row.start_date }} – {{ row.end_date }}</td><td>{{ row.reason }}</td><td><span class="pill {{ row.status }}">{{ row.status }}</span></td><td>
+{% if row.status == 'pending' %}<div class="actions tight">
+<form method="post" action="{{ url_for('review_leave',request_id=row.id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="decision" value="approved"><button class="btn btn-small btn-primary" type="submit">Approve</button></form>
+<form method="post" action="{{ url_for('review_leave',request_id=row.id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="decision" value="rejected"><button class="btn btn-small btn-danger" type="submit">Reject</button></form>
+</div>{% else %}<span class="muted">Reviewed</span>{% endif %}
+</td></tr>{% else %}<tr><td colspan="5" class="empty">No leave requests found.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}
