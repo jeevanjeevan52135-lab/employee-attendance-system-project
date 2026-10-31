@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE = 'jeevan1304/employee-app'
+        IMAGE = 'jeeva1304/employee-app'
     }
 
     stages {
